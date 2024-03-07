@@ -1,0 +1,367 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <title>Hello, world!</title>
+</head>
+<body>
+
+
+
+
+    <div class="container">
+        <div class="row">
+            <h2>Usuários <button type="button" class="btn btn-success" onclick="abreModal()">Adicionar</button></h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Id</th>
+                        <th scope="col">Nome</th>
+                        <th scope="col">Data de Nascimento</th>
+                        <th scope="col">CPF</th>
+                        <th scope="col">Valor</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody id="tabelacorpo">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+
+
+
+    <script>
+        var url = 'https://localhost:7189/Pessoafisica';
+        function atualizarLista() {
+            let xhr = new XMLHttpRequest();
+
+            xhr.open('GET', url, true);
+            xhr.setRequestHeader('Accept', '*/*');
+            xhr.setRequestHeader('Content-Type', 'application/json');
+
+            xhr.onreadystatechange = function (response) {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200 || xhr.status === 201) {
+                        let itens = JSON.parse(response.target.responseText)
+                        if (itens.length > 0) {
+                            let html = "";
+                            for (let x = 0; x < itens.length; x++) {
+                                html += `
+                                      <tr data-usuario="`+ encodeURI(JSON.stringify(itens[x])) + `">
+                                        <th scope="row">`+ itens[x].pessoaId + `</th>
+                                        <td>`+ itens[x].nomeCompleto + `</td>
+                                        <td>`+ itens[x].dataNascimento + `</td>
+                                        <td>`+ itens[x].cpf + `</td>
+                                        <td>`+ itens[x].valorRenda + `</td>
+                                        <td>
+                                            <button type="button" class="btn btn-warning" onclick="editar(this)">Editar</button>
+                                            <button type="button" class="btn btn-danger" onclick="remover(this)">Remover</button>
+                                        </td>
+                                    </tr>
+                                    `
+                            }
+                            document.querySelector("#tabelacorpo").innerHTML = html;
+                        }
+                    } else {
+                        swal("Erro!", "Erro ao adicionar, tente novamente mais tarde!", "error");
+                    }
+                }
+            };
+            xhr.send();
+        }
+        function editarClick() {
+
+            swal({
+                title: "Deseja realmente editar a Pessoa?",
+                text: "A ação seguinte será irreversível!",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            })
+                .then((willDelete) => {
+                    if (willDelete) {
+
+                        let xhr = new XMLHttpRequest();
+
+                        xhr.open('PUT', url, true);
+                        xhr.setRequestHeader('Accept', '*/*');
+                        xhr.setRequestHeader('Content-Type', 'application/json');
+
+                        let cpfRefat = document.querySelector("#editcpf").value;
+                        cpfRefat = cpfRefat.replaceAll(".", "");
+                        cpfRefat = cpfRefat.replaceAll("-", "");
+                        var data = {
+                            pessoaId: document.querySelector("#editid").value,
+                            nomeCompleto: document.querySelector("#editnome").value,
+                            dataNascimento: document.querySelector("#editdtnasc").value,
+                            valorRenda: document.querySelector("#editmoney").value,
+                            cpf: cpfRefat
+                        };
+
+                        xhr.onreadystatechange = function () {
+                            if (xhr.readyState === 4) {
+                                if (xhr.status === 200 || xhr.status === 201) {
+                                    atualizarLista();
+                                    $('#modalEditar').modal('hide');
+                                    document.querySelector("#editid").value = "";
+                                    document.querySelector("#editmoney").value = "";
+                                    document.querySelector("#editdtnasc").value = "";
+                                    document.querySelector("#editnome").value = "";
+                                    document.querySelector("#editcpf").value = "";
+                                    swal("Erro!", "Editado com sucesso!", "success");
+                                } else {
+                                    swal("Erro!", "Erro ao editar, tente novamente mais tarde!", "error");
+                                }
+                            }
+                        };
+
+                        var jsonData = JSON.stringify(data);
+                        xhr.send(jsonData);
+                    } else {
+                        swal("Não foi feito nenhuma operação!");
+                    }
+                });
+        }
+
+        function editar(elemento) {
+            let usudecod = decodeURI(elemento.parentElement.parentElement.dataset.usuario);
+            let obj = JSON.parse(usudecod);
+            document.querySelector("#editid").value = obj.pessoaId;
+            document.querySelector("#editmoney").value = obj.valorRenda;
+            document.querySelector("#editdtnasc").value = obj.dataNascimento.split("T")[0];
+            document.querySelector("#editnome").value = obj.nomeCompleto;
+            document.querySelector("#editcpf").value = obj.cpf;
+            $('#modalEditar').modal('show');
+            console.log(obj);
+        }
+
+
+        function remover(elemento) {
+
+            let usudecod = decodeURI(elemento.parentElement.parentElement.dataset.usuario);
+            let obj = JSON.parse(usudecod);
+            swal({
+                title: "Deseja realmente apagar a Pessoa?",
+                text: "A ação seguinte será irreversível!",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            })
+                .then((willDelete) => {
+                    if (willDelete) {
+
+
+
+
+
+
+                        let xhr = new XMLHttpRequest();
+
+                        xhr.open('DELETE', url, true);
+                        xhr.setRequestHeader('Accept', '*/*');
+                        xhr.setRequestHeader('Content-Type', 'application/json');
+
+
+                        xhr.onreadystatechange = function () {
+                            if (xhr.readyState === 4) {
+                                if (xhr.status === 200 || xhr.status === 201) {
+                                    atualizarLista();
+
+                                    swal("Erro!", "Removido com sucesso!", "success");
+                                } else {
+                                    swal("Erro!", "Erro ao remover, tente novamente mais tarde!", "error");
+                                }
+                            }
+                        };
+
+                        xhr.send(JSON.stringify(obj));
+
+
+
+
+
+
+                     
+                    } else {
+                        swal("Não foi feito nenhuma operação!");
+                    }
+                });
+        }
+
+        //adicionar
+        function salvar() {
+            let erro = [];
+
+            if (document.querySelector("#nome").value.length == 0) {
+                erro.push("Nome é obrigatório!")
+            }
+            if (document.querySelector("#dtnasc").value == '') {
+                erro.push("Data de Nacimento é obrigatório!")
+            }
+            if (document.querySelector("#cpf").value.length != 14) {
+                erro.push("CPF precisa ter 14 digitgos!")
+            }
+            if (document.querySelector("#cpf").value.length == 0) {
+                erro.push("CPF é obrigatório!")
+            }
+            if (document.querySelector("#money").value == '') {
+                erro.push("Valor Renda é obrigatório!")
+            }
+            if (erro.length == 0) {
+                let xhr = new XMLHttpRequest();
+
+                xhr.open('POST', url, true);
+                xhr.setRequestHeader('Accept', '*/*');
+                xhr.setRequestHeader('Content-Type', 'application/json');
+
+                let cpfRefat = document.querySelector("#cpf").value;
+                cpfRefat = cpfRefat.replaceAll(".", "");
+                cpfRefat = cpfRefat.replaceAll("-", "");
+                var data = {
+                    pessoaId: 0,
+                    nomeCompleto: document.querySelector("#nome").value,
+                    dataNascimento: document.querySelector("#dtnasc").value,
+                    valorRenda: document.querySelector("#money").value,
+                    cpf: cpfRefat
+                };
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200 || xhr.status === 201) {
+                            atualizarLista();
+                            $('#modalAdicionar').modal('hide');
+                            document.querySelector("#money").value = "";
+                            document.querySelector("#dtnasc").value = "";
+                            document.querySelector("#nome").value = "";
+                            document.querySelector("#cpf").value = "";
+                            swal("Erro!", "Adicionado com sucesso!", "success");
+                        } else {
+                            swal("Erro!", "Erro ao adicionar, tente novamente mais tarde!", "error");
+                        }
+                    }
+                };
+
+                var jsonData = JSON.stringify(data);
+                xhr.send(jsonData);
+
+            } else {
+                swal("Erro!", erro.join(", "), "error");
+            }
+        }
+
+        function abreModal() {
+            $('#modalAdicionar').modal('show');
+        }
+        //adicionar
+        atualizarLista();
+    </script>
+
+
+
+    <div class="modal fade" id="modalAdicionar" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Adicionar Pessoa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="nome" class="col-form-label">Nome:</label>
+                            <input type="text" class="form-control" id="nome">
+                        </div>
+                        <div class="mb-3">
+                            <label for="dtnasc" class="col-form-label">Data de Nascimento:</label>
+                            <input type="date" class="form-control" id="dtnasc">
+                        </div>
+                        <div class="mb-3">
+                            <label for="cpf" class="col-form-label ">CPF:</label>
+                            <input type="text" class="form-control cpf" id="cpf">
+                        </div>
+                        <div class="mb-3">
+                            <label for="money" class="col-form-label">Valor Renda:</label>
+                            <input type="number" class="form-control money" id="money">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="salvar()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Adicionar Pessoa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="nome" class="col-form-label">Nome:</label>
+                            <input type="number" class="form-control" id="editid">
+                        </div>
+                        <div class="mb-3">
+                            <label for="nome" class="col-form-label">Nome:</label>
+                            <input type="text" class="form-control" id="editnome">
+                        </div>
+                        <div class="mb-3">
+                            <label for="dtnasc" class="col-form-label">Data de Nascimento:</label>
+                            <input type="date" class="form-control" id="editdtnasc">
+                        </div>
+                        <div class="mb-3">
+                            <label for="cpf" class="col-form-label ">CPF:</label>
+                            <input type="text" class="form-control cpf" id="editcpf">
+                        </div>
+                        <div class="mb-3">
+                            <label for="money" class="col-form-label">Valor Renda:</label>
+                            <input type="number" class="form-control money" id="editmoney">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="editarClick()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="js/jquery.mask.min.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script>
+        $('.cpf').mask('000.000.000-00', { reverse: true });
+            //$('.money').mask('#.##0,00', { reverse: true });
+    </script>
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
