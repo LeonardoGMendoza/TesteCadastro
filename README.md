@@ -18,7 +18,7 @@ CREATE TABLE Pessoa_PF (
     CPF char(11) NOT NULL
 );
 </code>
-Certifique-se de que as bibliotecas Bootstrap e jQuery estão incluídas em seu projeto e configuradas corretamente.
+Certifique-se de que as bibliotecas Bootstrap , jQuery e Bilbioteca externas no meu caso estou usando o swal para exibir modals, sim estão incluídas em seu projeto e configuradas corretamente.
 Verifique se a API está configurada e em execução.
 <h2>Execução</h2>
 Abra o projeto no Visual Studio.
